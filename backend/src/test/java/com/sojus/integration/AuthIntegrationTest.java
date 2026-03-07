@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -23,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @DisplayName("Auth — Tests de Integración")
+@SuppressWarnings("null")
 class AuthIntegrationTest {
 
     @Autowired
@@ -66,7 +66,7 @@ class AuthIntegrationTest {
         }
 
         @Test
-        @DisplayName("Login fallido con password incorrecta — 409 Conflict")
+        @DisplayName("Login fallido con password incorrecta — 401 Unauthorized")
         void loginFallido_passwordIncorrecta() throws Exception {
             LoginRequest login = new LoginRequest();
             login.setUsername("admin");
@@ -75,11 +75,11 @@ class AuthIntegrationTest {
             mockMvc.perform(post("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(login)))
-                    .andExpect(status().isConflict());
+                    .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @DisplayName("Login fallido con usuario inexistente — 409 Conflict")
+        @DisplayName("Login fallido con usuario inexistente — 401 Unauthorized")
         void loginFallido_usuarioNoExiste() throws Exception {
             LoginRequest login = new LoginRequest();
             login.setUsername("noexiste");
@@ -88,7 +88,7 @@ class AuthIntegrationTest {
             mockMvc.perform(post("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(login)))
-                    .andExpect(status().isConflict());
+                    .andExpect(status().isUnauthorized());
         }
     }
 

@@ -1,12 +1,17 @@
 package com.sojus.service;
 
+import com.sojus.domain.entity.Juzgado;
 import com.sojus.domain.entity.User;
 import com.sojus.domain.enums.RoleName;
+import com.sojus.dto.UserCreateRequest;
 import com.sojus.dto.UserResponse;
+import com.sojus.dto.UserUpdateRequest;
 import com.sojus.exception.BusinessRuleException;
 import com.sojus.exception.ResourceNotFoundException;
+import com.sojus.repository.JuzgadoRepository;
 import com.sojus.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +19,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Servicio de gestión de usuarios del sistema.
+ * Maneja creación con encriptación BCrypt, actualización, soft-delete,
+ * y consultas por rol.
+ */
 @Service
 @RequiredArgsConstructor
+@Slf4j
+@SuppressWarnings("null")
 public class UserService {
 
     private final UserRepository userRepository;
+    private final JuzgadoRepository juzgadoRepository;
     private final PasswordEncoder passwordEncoder;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -42,34 +55,66 @@ public class UserService {
         return userRepository.findAllByRoleAndDeletedFalse(role);
     }
 
+    /**
+     * Crea un usuario a partir de un DTO de request.
+     * Encripta la contraseña y valida unicidad del username.
+     */
     @Transactional
-    public User create(User user) {
-        if (userRepository.existsByUsername(user.getUsername())) {
+    public UserResponse createFromRequest(UserCreateRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessRuleException("El nombre de usuario ya existe");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }
 
-    @Transactional
-    public User update(Long id, User updated) {
-        User existing = findById(id);
-        existing.setFullName(updated.getFullName());
-        existing.setEmail(updated.getEmail());
-        existing.setRole(updated.getRole());
-        existing.setActive(updated.getActive());
-        if (updated.getPassword() != null && !updated.getPassword().isEmpty()) {
-            existing.setPassword(passwordEncoder.encode(updated.getPassword()));
+        User user = User.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .role(RoleName.valueOf(request.getRole()))
+                .build();
+
+        if (request.getJuzgadoId() != null) {
+            Juzgado juzgado = juzgadoRepository.findById(request.getJuzgadoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Juzgado", request.getJuzgadoId()));
+            user.setJuzgado(juzgado);
         }
-        return userRepository.save(existing);
+
+        User saved = userRepository.save(user);
+        log.info("Usuario creado: {} (rol: {})", saved.getUsername(), saved.getRole());
+        return toResponse(saved);
     }
 
+    /**
+     * Actualiza un usuario existente a partir de un DTO de request.
+     * La contraseña solo se actualiza si se proporciona (no vacía).
+     */
+    @Transactional
+    public UserResponse updateFromRequest(Long id, UserUpdateRequest request) {
+        User existing = findById(id);
+        existing.setFullName(request.getFullName());
+        existing.setEmail(request.getEmail());
+        existing.setRole(RoleName.valueOf(request.getRole()));
+        if (request.getActive() != null) {
+            existing.setActive(request.getActive());
+        }
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            existing.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        User saved = userRepository.save(existing);
+        log.info("Usuario actualizado: {} (ID: {})", saved.getUsername(), saved.getId());
+        return toResponse(saved);
+    }
+
+    /**
+     * Soft-delete: marca al usuario como eliminado y desactivado.
+     */
     @Transactional
     public void softDelete(Long id) {
         User user = findById(id);
         user.setDeleted(true);
         user.setActive(false);
         userRepository.save(user);
+        log.info("Usuario eliminado (soft): {} (ID: {})", user.getUsername(), id);
     }
 
     // ---- Métodos DTO (para controllers) ----
@@ -87,16 +132,6 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserResponse> findByRoleAsDto(RoleName role) {
         return findByRole(role).stream().map(this::toResponse).toList();
-    }
-
-    @Transactional
-    public UserResponse createAsDto(User user) {
-        return toResponse(create(user));
-    }
-
-    @Transactional
-    public UserResponse updateAsDto(Long id, User user) {
-        return toResponse(update(id, user));
     }
 
     private UserResponse toResponse(User u) {

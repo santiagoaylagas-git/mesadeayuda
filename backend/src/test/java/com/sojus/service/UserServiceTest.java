@@ -2,9 +2,12 @@ package com.sojus.service;
 
 import com.sojus.domain.entity.User;
 import com.sojus.domain.enums.RoleName;
+import com.sojus.dto.UserCreateRequest;
 import com.sojus.dto.UserResponse;
+import com.sojus.dto.UserUpdateRequest;
 import com.sojus.exception.BusinessRuleException;
 import com.sojus.exception.ResourceNotFoundException;
+import com.sojus.repository.JuzgadoRepository;
 import com.sojus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +29,13 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService — Tests Unitarios")
+@SuppressWarnings("null")
 class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private JuzgadoRepository juzgadoRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
 
@@ -55,7 +61,7 @@ class UserServiceTest {
     }
 
     // ================================================================
-    // CREAR USUARIO
+    // CREAR USUARIO (vía DTO)
     // ================================================================
     @Nested
     @DisplayName("Crear Usuarios")
@@ -64,9 +70,11 @@ class UserServiceTest {
         @Test
         @DisplayName("Debe crear usuario con password encodeada")
         void crearUsuario_exitoso() {
-            User newUser = User.builder()
-                    .username("nuevo").password("plain123").fullName("Nuevo User")
-                    .role(RoleName.OPERADOR).build();
+            UserCreateRequest request = new UserCreateRequest();
+            request.setUsername("nuevo");
+            request.setPassword("plain123");
+            request.setFullName("Nuevo User");
+            request.setRole("OPERADOR");
 
             when(userRepository.existsByUsername("nuevo")).thenReturn(false);
             when(passwordEncoder.encode("plain123")).thenReturn("$2a$encoded");
@@ -77,30 +85,32 @@ class UserServiceTest {
                 return u;
             });
 
-            User result = userService.create(newUser);
+            UserResponse result = userService.createFromRequest(request);
 
             assertThat(result.getId()).isEqualTo(10L);
-            assertThat(result.getPassword()).isEqualTo("$2a$encoded");
+            assertThat(result.getUsername()).isEqualTo("nuevo");
             verify(passwordEncoder).encode("plain123");
         }
 
         @Test
         @DisplayName("Debe rechazar username duplicado")
         void crearUsuario_usernameDuplicado() {
-            User newUser = User.builder()
-                    .username("admin").password("pass").fullName("Duplicado")
-                    .role(RoleName.OPERADOR).build();
+            UserCreateRequest request = new UserCreateRequest();
+            request.setUsername("admin");
+            request.setPassword("pass");
+            request.setFullName("Duplicado");
+            request.setRole("OPERADOR");
 
             when(userRepository.existsByUsername("admin")).thenReturn(true);
 
-            assertThatThrownBy(() -> userService.create(newUser))
+            assertThatThrownBy(() -> userService.createFromRequest(request))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("ya existe");
         }
     }
 
     // ================================================================
-    // ACTUALIZAR USUARIO
+    // ACTUALIZAR USUARIO (vía DTO)
     // ================================================================
     @Nested
     @DisplayName("Actualizar Usuarios")
@@ -109,14 +119,16 @@ class UserServiceTest {
         @Test
         @DisplayName("Debe actualizar campos del usuario")
         void actualizarUsuario_exitoso() {
-            User updated = User.builder()
-                    .fullName("Admin Actualizado").email("new@test.com")
-                    .role(RoleName.ADMINISTRADOR).active(true).build();
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setFullName("Admin Actualizado");
+            request.setEmail("new@test.com");
+            request.setRole("ADMINISTRADOR");
+            request.setActive(true);
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            User result = userService.update(1L, updated);
+            UserResponse result = userService.updateFromRequest(1L, request);
 
             assertThat(result.getFullName()).isEqualTo("Admin Actualizado");
             assertThat(result.getEmail()).isEqualTo("new@test.com");
@@ -125,32 +137,36 @@ class UserServiceTest {
         @Test
         @DisplayName("Debe encodear nueva password si se proporciona")
         void actualizarUsuario_nuevaPassword() {
-            User updated = User.builder()
-                    .fullName("Admin").email("admin@test.com")
-                    .role(RoleName.ADMINISTRADOR).active(true)
-                    .password("newpass").build();
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setFullName("Admin");
+            request.setEmail("admin@test.com");
+            request.setRole("ADMINISTRADOR");
+            request.setActive(true);
+            request.setPassword("newpass");
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
             when(passwordEncoder.encode("newpass")).thenReturn("$2a$newencoded");
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            User result = userService.update(1L, updated);
+            userService.updateFromRequest(1L, request);
 
-            assertThat(result.getPassword()).isEqualTo("$2a$newencoded");
+            verify(passwordEncoder).encode("newpass");
         }
 
         @Test
         @DisplayName("No debe encodear si password es null o vacía")
         void actualizarUsuario_sinPassword() {
-            User updated = User.builder()
-                    .fullName("Admin").email("admin@test.com")
-                    .role(RoleName.ADMINISTRADOR).active(true)
-                    .password("").build();
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setFullName("Admin");
+            request.setEmail("admin@test.com");
+            request.setRole("ADMINISTRADOR");
+            request.setActive(true);
+            request.setPassword("");
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            userService.update(1L, updated);
+            userService.updateFromRequest(1L, request);
 
             verify(passwordEncoder, never()).encode(anyString());
         }

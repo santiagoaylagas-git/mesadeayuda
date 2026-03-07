@@ -1,11 +1,15 @@
 package com.sojus.service;
 
+import com.sojus.domain.entity.AuditLog;
 import com.sojus.domain.entity.Hardware;
 import com.sojus.domain.entity.Software;
 import com.sojus.domain.enums.AssetStatus;
+import com.sojus.dto.*;
 import com.sojus.exception.BusinessRuleException;
 import com.sojus.exception.ResourceNotFoundException;
+import com.sojus.repository.AuditLogRepository;
 import com.sojus.repository.HardwareRepository;
+import com.sojus.repository.JuzgadoRepository;
 import com.sojus.repository.SoftwareRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,12 +30,17 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InventoryService — Tests Unitarios")
+@SuppressWarnings("null")
 class InventoryServiceTest {
 
     @Mock
     private HardwareRepository hardwareRepository;
     @Mock
     private SoftwareRepository softwareRepository;
+    @Mock
+    private JuzgadoRepository juzgadoRepository;
+    @Mock
+    private AuditLogRepository auditLogRepository;
 
     @InjectMocks
     private InventoryService inventoryService;
@@ -52,6 +61,7 @@ class InventoryServiceTest {
                 .id(1L).nombre("Microsoft Office 365").version("2024")
                 .fabricante("Microsoft").tipoLicencia("Suscripción")
                 .cantidadLicencias(500).deleted(false)
+                .estado(AssetStatus.ACTIVO)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -64,22 +74,22 @@ class InventoryServiceTest {
     class CrudHardware {
 
         @Test
-        @DisplayName("findAllHardware devuelve solo no eliminados")
+        @DisplayName("findAllHardware devuelve solo no eliminados como DTOs")
         void findAll() {
             when(hardwareRepository.findAllByDeletedFalse()).thenReturn(List.of(pc));
 
-            List<Hardware> result = inventoryService.findAllHardware();
+            List<HardwareResponse> result = inventoryService.findAllHardware();
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getInventarioPatrimonial()).isEqualTo("INV-001-0001");
         }
 
         @Test
-        @DisplayName("findHardwareById devuelve hardware existente")
+        @DisplayName("findHardwareById devuelve hardware existente como DTO")
         void findById_exitoso() {
             when(hardwareRepository.findById(1L)).thenReturn(Optional.of(pc));
 
-            Hardware result = inventoryService.findHardwareById(1L);
+            HardwareResponse result = inventoryService.findHardwareById(1L);
 
             assertThat(result.getMarca()).isEqualTo("Dell");
         }
@@ -95,32 +105,38 @@ class InventoryServiceTest {
         }
 
         @Test
-        @DisplayName("createHardware exitoso")
+        @DisplayName("createHardware exitoso con auditoría")
         void crear_exitoso() {
-            Hardware nuevo = Hardware.builder()
-                    .inventarioPatrimonial("INV-NEW-0001").clase("Impresora").build();
+            HardwareRequest request = new HardwareRequest();
+            request.setInventarioPatrimonial("INV-NEW-0001");
+            request.setClase("Impresora");
 
             when(hardwareRepository.existsByInventarioPatrimonial("INV-NEW-0001")).thenReturn(false);
             when(hardwareRepository.save(any(Hardware.class))).thenAnswer(inv -> {
                 Hardware h = inv.getArgument(0);
                 h.setId(10L);
+                h.setEstado(AssetStatus.ACTIVO);
+                h.setCreatedAt(LocalDateTime.now());
                 return h;
             });
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            Hardware result = inventoryService.createHardware(nuevo);
+            HardwareResponse result = inventoryService.createHardware(request, "admin");
 
             assertThat(result.getId()).isEqualTo(10L);
+            verify(auditLogRepository).save(any(AuditLog.class));
         }
 
         @Test
         @DisplayName("createHardware rechaza inventario patrimonial duplicado")
         void crear_duplicado() {
-            Hardware duplicado = Hardware.builder()
-                    .inventarioPatrimonial("INV-001-0001").clase("PC").build();
+            HardwareRequest request = new HardwareRequest();
+            request.setInventarioPatrimonial("INV-001-0001");
+            request.setClase("PC");
 
             when(hardwareRepository.existsByInventarioPatrimonial("INV-001-0001")).thenReturn(true);
 
-            assertThatThrownBy(() -> inventoryService.createHardware(duplicado))
+            assertThatThrownBy(() -> inventoryService.createHardware(request, "admin"))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("Inventario Patrimonial");
         }
@@ -128,28 +144,35 @@ class InventoryServiceTest {
         @Test
         @DisplayName("updateHardware actualiza campos correctamente")
         void actualizar_exitoso() {
-            Hardware updated = Hardware.builder()
-                    .clase("Servidor").tipo("Rack").marca("HP").modelo("ProLiant")
-                    .estado(AssetStatus.EN_REPARACION).build();
+            HardwareRequest request = new HardwareRequest();
+            request.setClase("Servidor");
+            request.setTipo("Rack");
+            request.setMarca("HP");
+            request.setModelo("ProLiant");
+            request.setEstado("EN_REPARACION");
+            request.setInventarioPatrimonial("INV-001-0001");
 
             when(hardwareRepository.findById(1L)).thenReturn(Optional.of(pc));
             when(hardwareRepository.save(any(Hardware.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            Hardware result = inventoryService.updateHardware(1L, updated);
+            HardwareResponse result = inventoryService.updateHardware(1L, request, "admin");
 
             assertThat(result.getClase()).isEqualTo("Servidor");
-            assertThat(result.getEstado()).isEqualTo(AssetStatus.EN_REPARACION);
+            assertThat(result.getEstado()).isEqualTo("EN_REPARACION");
         }
 
         @Test
-        @DisplayName("softDeleteHardware marca como eliminado")
+        @DisplayName("softDeleteHardware marca como eliminado y registra auditoría")
         void softDelete_exitoso() {
             when(hardwareRepository.findById(1L)).thenReturn(Optional.of(pc));
             when(hardwareRepository.save(any(Hardware.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            inventoryService.softDeleteHardware(1L);
+            inventoryService.softDeleteHardware(1L, "admin");
 
             assertThat(pc.getDeleted()).isTrue();
+            verify(auditLogRepository).save(any(AuditLog.class));
         }
     }
 
@@ -161,57 +184,66 @@ class InventoryServiceTest {
     class CrudSoftware {
 
         @Test
-        @DisplayName("findAllSoftware devuelve solo no eliminados")
+        @DisplayName("findAllSoftware devuelve solo no eliminados como DTOs")
         void findAll() {
             when(softwareRepository.findAllByDeletedFalse()).thenReturn(List.of(office));
 
-            List<Software> result = inventoryService.findAllSoftware();
+            List<SoftwareResponse> result = inventoryService.findAllSoftware();
 
             assertThat(result).hasSize(1);
         }
 
         @Test
-        @DisplayName("createSoftware exitoso")
+        @DisplayName("createSoftware exitoso con auditoría")
         void crear_exitoso() {
-            Software nuevo = Software.builder().nombre("Antivirus").build();
+            SoftwareRequest request = new SoftwareRequest();
+            request.setNombre("Antivirus");
 
             when(softwareRepository.save(any(Software.class))).thenAnswer(inv -> {
                 Software s = inv.getArgument(0);
                 s.setId(10L);
+                s.setEstado(AssetStatus.ACTIVO);
+                s.setCreatedAt(LocalDateTime.now());
                 return s;
             });
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            Software result = inventoryService.createSoftware(nuevo);
+            SoftwareResponse result = inventoryService.createSoftware(request, "admin");
 
             assertThat(result.getId()).isEqualTo(10L);
+            verify(auditLogRepository).save(any(AuditLog.class));
         }
 
         @Test
         @DisplayName("updateSoftware actualiza campos correctamente")
         void actualizar_exitoso() {
-            Software updated = Software.builder()
-                    .nombre("Microsoft Office 365 - Renovado").version("2025")
-                    .fabricante("Microsoft").tipoLicencia("Suscripción Anual")
-                    .cantidadLicencias(600).build();
+            SoftwareRequest request = new SoftwareRequest();
+            request.setNombre("Microsoft Office 365 - Renovado");
+            request.setVersion("2025");
+            request.setFabricante("Microsoft");
+            request.setTipoLicencia("Suscripción Anual");
+            request.setCantidadLicencias(600);
 
             when(softwareRepository.findById(1L)).thenReturn(Optional.of(office));
             when(softwareRepository.save(any(Software.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            Software result = inventoryService.updateSoftware(1L, updated);
+            SoftwareResponse result = inventoryService.updateSoftware(1L, request, "admin");
 
             assertThat(result.getNombre()).isEqualTo("Microsoft Office 365 - Renovado");
-            assertThat(result.getCantidadLicencias()).isEqualTo(600);
         }
 
         @Test
-        @DisplayName("softDeleteSoftware marca como eliminado")
+        @DisplayName("softDeleteSoftware marca como eliminado y registra auditoría")
         void softDelete_exitoso() {
             when(softwareRepository.findById(1L)).thenReturn(Optional.of(office));
             when(softwareRepository.save(any(Software.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            inventoryService.softDeleteSoftware(1L);
+            inventoryService.softDeleteSoftware(1L, "admin");
 
             assertThat(office.getDeleted()).isTrue();
+            verify(auditLogRepository).save(any(AuditLog.class));
         }
 
         @Test

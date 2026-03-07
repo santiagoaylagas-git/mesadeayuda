@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TicketService — Tests Unitarios")
+@SuppressWarnings("null")
 class TicketServiceTest {
 
     @Mock

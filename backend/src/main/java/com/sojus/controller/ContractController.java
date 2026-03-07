@@ -1,66 +1,66 @@
 package com.sojus.controller;
 
-import com.sojus.domain.entity.Contract;
+import com.sojus.dto.ContractRequest;
+import com.sojus.dto.ContractResponse;
 import com.sojus.service.ContractService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controlador REST para la gestión de contratos con proveedores.
+ * Acceso restringido a ADMINISTRADOR (CRUD completo) y OPERADOR (lectura).
+ */
 @RestController
 @RequestMapping("/api/contracts")
 @RequiredArgsConstructor
-@Tag(name = "Contratos", description = "Gestión de contratos y alertas de vencimiento")
 public class ContractController {
 
     private final ContractService contractService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
-    @Operation(summary = "Listar contratos activos")
-    public ResponseEntity<List<Contract>> findAll() {
-        return ResponseEntity.ok(contractService.findAll());
+    public List<ContractResponse> listAll() {
+        return contractService.findAll();
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
-    @Operation(summary = "Obtener contrato por ID")
-    public ResponseEntity<Contract> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(contractService.findById(id));
-    }
-
-    @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    @Operation(summary = "Crear nuevo contrato")
-    public ResponseEntity<Contract> create(@Valid @RequestBody Contract contract) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(contractService.create(contract));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    @Operation(summary = "Actualizar contrato")
-    public ResponseEntity<Contract> update(@PathVariable Long id, @Valid @RequestBody Contract contract) {
-        return ResponseEntity.ok(contractService.update(id, contract));
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    @Operation(summary = "Desactivar contrato")
-    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
-        contractService.deactivate(id);
-        return ResponseEntity.noContent().build();
+    public ContractResponse getById(@PathVariable Long id) {
+        return contractService.findById(id);
     }
 
     @GetMapping("/expiring")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
-    @Operation(summary = "Contratos próximos a vencer", description = "Enviar ?days=30 para ver contratos que vencen en 30 días")
-    public ResponseEntity<List<Contract>> findExpiring(@RequestParam(defaultValue = "30") int days) {
-        return ResponseEntity.ok(contractService.findExpiringSoon(days));
+    public List<ContractResponse> findExpiring(@RequestParam(defaultValue = "30") int days) {
+        return contractService.findExpiringSoon(days);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ContractResponse create(@Valid @RequestBody ContractRequest request,
+            Authentication auth) {
+        return contractService.create(request, auth.getName());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ContractResponse update(@PathVariable Long id,
+            @Valid @RequestBody ContractRequest request,
+            Authentication auth) {
+        return contractService.update(id, request, auth.getName());
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public void deactivate(@PathVariable Long id, Authentication auth) {
+        contractService.deactivate(id, auth.getName());
     }
 }

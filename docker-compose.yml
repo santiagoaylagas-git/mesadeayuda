@@ -1,0 +1,61 @@
+# ============================================================
+# SOJUS HelpDesk — Docker Compose
+# Uso:
+#   1. cp .env.example .env     (editar valores si es necesario)
+#   2. docker-compose up --build
+#   3. Abrir http://localhost:8080/swagger-ui.html
+# ============================================================
+
+services:
+  # ---- PostgreSQL 16 ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: sojus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sojus_db}
+      POSTGRES_USER: ${DB_USER:-sojus_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sojus_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/docker/init-db.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sojus_user} -d ${DB_NAME:-sojus_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sojus-network
+
+  # ---- Backend Spring Boot ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sojus-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_NAME: ${DB_NAME:-sojus_db}
+      DB_USER: ${DB_USER:-sojus_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sojus_pass}
+      JWT_SECRET: ${JWT_SECRET:-DefaultDevSecretKeyThatMustBeChangedInProduction2024!!}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8081,http://localhost:19006}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - sojus-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  sojus-network:
+    driver: bridge

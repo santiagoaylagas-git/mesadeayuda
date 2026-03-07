@@ -79,5 +79,4 @@ mvn spring-boot:run
 | Admin | `admin` | `admin123` |
 | Operador | `operador` | `oper123` |
 | Técnico | `tecnico` | `tec123` |
-| Gestor Inventario | `gestor` | `gest123` |
-| Auditor | `auditor` | `audit123` |
+

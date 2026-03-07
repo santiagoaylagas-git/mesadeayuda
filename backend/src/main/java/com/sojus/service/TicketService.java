@@ -30,6 +30,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class TicketService {
 
         private final TicketRepository ticketRepository;

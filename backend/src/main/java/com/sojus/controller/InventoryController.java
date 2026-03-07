@@ -1,96 +1,106 @@
 package com.sojus.controller;
 
-import com.sojus.domain.entity.Hardware;
-import com.sojus.domain.entity.Software;
+import com.sojus.dto.HardwareRequest;
+import com.sojus.dto.HardwareResponse;
+import com.sojus.dto.SoftwareRequest;
+import com.sojus.dto.SoftwareResponse;
 import com.sojus.service.InventoryService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controlador REST para la gestión de inventario de Hardware y Software.
+ * Acceso restringido a ADMINISTRADOR (CRUD completo) y OPERADOR/TECNICO
+ * (lectura).
+ */
 @RestController
 @RequestMapping("/api/inventory")
 @RequiredArgsConstructor
-@Tag(name = "Inventario", description = "Gestión de hardware y software")
 public class InventoryController {
 
     private final InventoryService inventoryService;
 
-    // ---- Hardware ----
+    // ================================================================
+    // HARDWARE
+    // ================================================================
 
     @GetMapping("/hardware")
-    @Operation(summary = "Listar todo el hardware")
-    public ResponseEntity<List<Hardware>> findAllHardware() {
-        return ResponseEntity.ok(inventoryService.findAllHardware());
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR', 'TECNICO')")
+    public List<HardwareResponse> listHardware() {
+        return inventoryService.findAllHardware();
     }
 
     @GetMapping("/hardware/{id}")
-    @Operation(summary = "Obtener hardware por ID")
-    public ResponseEntity<Hardware> findHardwareById(@PathVariable Long id) {
-        return ResponseEntity.ok(inventoryService.findHardwareById(id));
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR', 'TECNICO')")
+    public HardwareResponse getHardware(@PathVariable Long id) {
+        return inventoryService.findHardwareById(id);
     }
 
     @PostMapping("/hardware")
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Crear nuevo hardware")
-    public ResponseEntity<Hardware> createHardware(@Valid @RequestBody Hardware hardware) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.createHardware(hardware));
+    public HardwareResponse createHardware(@Valid @RequestBody HardwareRequest request,
+            Authentication auth) {
+        return inventoryService.createHardware(request, auth.getName());
     }
 
     @PutMapping("/hardware/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Actualizar hardware")
-    public ResponseEntity<Hardware> updateHardware(@PathVariable Long id, @Valid @RequestBody Hardware hardware) {
-        return ResponseEntity.ok(inventoryService.updateHardware(id, hardware));
+    public HardwareResponse updateHardware(@PathVariable Long id,
+            @Valid @RequestBody HardwareRequest request,
+            Authentication auth) {
+        return inventoryService.updateHardware(id, request, auth.getName());
     }
 
     @DeleteMapping("/hardware/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Eliminar hardware (soft delete)")
-    public ResponseEntity<Void> deleteHardware(@PathVariable Long id) {
-        inventoryService.softDeleteHardware(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public void deleteHardware(@PathVariable Long id, Authentication auth) {
+        inventoryService.softDeleteHardware(id, auth.getName());
     }
 
-    // ---- Software ----
+    // ================================================================
+    // SOFTWARE
+    // ================================================================
 
     @GetMapping("/software")
-    @Operation(summary = "Listar todo el software")
-    public ResponseEntity<List<Software>> findAllSoftware() {
-        return ResponseEntity.ok(inventoryService.findAllSoftware());
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR', 'TECNICO')")
+    public List<SoftwareResponse> listSoftware() {
+        return inventoryService.findAllSoftware();
     }
 
     @GetMapping("/software/{id}")
-    @Operation(summary = "Obtener software por ID")
-    public ResponseEntity<Software> findSoftwareById(@PathVariable Long id) {
-        return ResponseEntity.ok(inventoryService.findSoftwareById(id));
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR', 'TECNICO')")
+    public SoftwareResponse getSoftware(@PathVariable Long id) {
+        return inventoryService.findSoftwareById(id);
     }
 
     @PostMapping("/software")
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Crear nuevo software")
-    public ResponseEntity<Software> createSoftware(@Valid @RequestBody Software software) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.createSoftware(software));
+    public SoftwareResponse createSoftware(@Valid @RequestBody SoftwareRequest request,
+            Authentication auth) {
+        return inventoryService.createSoftware(request, auth.getName());
     }
 
     @PutMapping("/software/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Actualizar software")
-    public ResponseEntity<Software> updateSoftware(@PathVariable Long id, @Valid @RequestBody Software software) {
-        return ResponseEntity.ok(inventoryService.updateSoftware(id, software));
+    public SoftwareResponse updateSoftware(@PathVariable Long id,
+            @Valid @RequestBody SoftwareRequest request,
+            Authentication auth) {
+        return inventoryService.updateSoftware(id, request, auth.getName());
     }
 
     @DeleteMapping("/software/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Eliminar software (soft delete)")
-    public ResponseEntity<Void> deleteSoftware(@PathVariable Long id) {
-        inventoryService.softDeleteSoftware(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public void deleteSoftware(@PathVariable Long id, Authentication auth) {
+        inventoryService.softDeleteSoftware(id, auth.getName());
     }
 }

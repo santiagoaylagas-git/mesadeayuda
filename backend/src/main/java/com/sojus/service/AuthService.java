@@ -3,7 +3,7 @@ package com.sojus.service;
 import com.sojus.domain.entity.User;
 import com.sojus.dto.LoginRequest;
 import com.sojus.dto.LoginResponse;
-import com.sojus.exception.BusinessRuleException;
+import com.sojus.exception.AuthenticationFailedException;
 import com.sojus.repository.UserRepository;
 import com.sojus.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +22,14 @@ public class AuthService {
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsernameAndDeletedFalse(request.getUsername())
-                .orElseThrow(() -> new BusinessRuleException("Credenciales inválidas"));
+                .orElseThrow(() -> new AuthenticationFailedException("Credenciales inválidas"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BusinessRuleException("Credenciales inválidas");
+            throw new AuthenticationFailedException("Credenciales inválidas");
         }
 
         if (!user.getActive()) {
-            throw new BusinessRuleException("Usuario desactivado");
+            throw new AuthenticationFailedException("Usuario desactivado");
         }
 
         String token = tokenProvider.generateToken(user.getUsername(), user.getRole().name());

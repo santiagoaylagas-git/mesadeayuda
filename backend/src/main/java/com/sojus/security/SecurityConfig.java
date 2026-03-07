@@ -42,6 +42,7 @@ public class SecurityConfig {
                         // --- Públicos ---
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
                         // --- Auditoría: solo ADMINISTRADOR ---
