@@ -23,7 +23,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DashboardService — Tests Unitarios")
-@SuppressWarnings("null")
 class DashboardServiceTest {
 
     @Mock

@@ -1,16 +1,15 @@
 -- ============================================================
--- SOJUS — Datos Semilla para Docker
+-- SOJUS — Datos Semilla para Docker (PostgreSQL)
 -- Este script se ejecuta automáticamente cuando PostgreSQL
 -- crea la base de datos por primera vez.
--- Las tablas son creadas por Hibernate (ddl-auto=update).
+-- ALINEADO con DataInitializer.java para consistencia.
 -- ============================================================
 
--- NOTA: Este script se ejecuta ANTES de que Hibernate cree las tablas.
--- Por eso usamos CREATE TABLE IF NOT EXISTS para las tablas necesarias,
--- y luego insertamos los datos semilla.
-
 -- ============================================================
--- 1. ESTRUCTURA TERRITORIAL
+-- 1. ESTRUCTURA DE TABLAS
+-- Las tablas son creadas por Hibernate (ddl-auto=update),
+-- pero las definimos aquí como respaldo por si este script
+-- se ejecuta antes de que Hibernate inicie.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS circunscripciones (
@@ -143,7 +142,7 @@ CREATE TABLE IF NOT EXISTS contracts (
 
 CREATE TABLE IF NOT EXISTS audit_log (
     id          BIGSERIAL       PRIMARY KEY,
-    entity_name VARCHAR(50)     NOT NULL,
+    entity_name VARCHAR(100)    NOT NULL,
     entity_id   BIGINT,
     action      VARCHAR(30)     NOT NULL,
     username    VARCHAR(50),
@@ -154,86 +153,91 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 -- ============================================================
--- DATOS SEMILLA
+-- 2. DATOS SEMILLA (alineados con DataInitializer.java)
 -- ============================================================
 
--- Circunscripciones
-INSERT INTO circunscripciones (nombre, codigo) VALUES
-    ('Primera Circunscripción',  'CIRC-001'),
-    ('Segunda Circunscripción',  'CIRC-002'),
-    ('Tercera Circunscripción',  'CIRC-003'),
-    ('Cuarta Circunscripción',   'CIRC-004'),
-    ('Quinta Circunscripción',   'CIRC-005')
-ON CONFLICT DO NOTHING;
+-- Circunscripciones (DataInitializer crea 2)
+INSERT INTO circunscripciones (id, nombre, codigo) VALUES
+    (1, 'Primera Circunscripción',  'CIRC-001'),
+    (2, 'Segunda Circunscripción',  'CIRC-002')
+ON CONFLICT (id) DO NOTHING;
 
--- Distritos
-INSERT INTO distritos (nombre, ciudad, circunscripcion_id) VALUES
-    ('Distrito Santa Fe',     'Santa Fe',      1),
-    ('Distrito Rosario',      'Rosario',       2),
-    ('Distrito Venado Tuerto','Venado Tuerto', 3),
-    ('Distrito Reconquista',  'Reconquista',   4),
-    ('Distrito Rafaela',      'Rafaela',       5)
-ON CONFLICT DO NOTHING;
+-- Distritos (DataInitializer crea 2)
+INSERT INTO distritos (id, nombre, ciudad, circunscripcion_id) VALUES
+    (1, 'Santa Fe', 'Santa Fe', 1),
+    (2, 'Rosario',  'Rosario',  2)
+ON CONFLICT (id) DO NOTHING;
 
--- Edificios
-INSERT INTO edificios (nombre, direccion, distrito_id) VALUES
-    ('Tribunales Santa Fe',         'Av. Gral. López 2550, Santa Fe',      1),
-    ('Centro de Justicia Penal SF', '1ra. Junta 2651, Santa Fe',           1),
-    ('Tribunales Rosario',          'Balcarce 1651, Rosario',              2),
-    ('Centro de Justicia Penal Ros','Salta 2350, Rosario',                 2),
-    ('Juzgado Venado Tuerto',       'Belgrano 321, Venado Tuerto',         3)
-ON CONFLICT DO NOTHING;
+-- Edificios (DataInitializer crea 2)
+INSERT INTO edificios (id, nombre, direccion, distrito_id) VALUES
+    (1, 'Tribunales Santa Fe', '1° de Mayo 2551',  1),
+    (2, 'Tribunales Rosario',  'Balcarce 1651',    2)
+ON CONFLICT (id) DO NOTHING;
 
--- Juzgados
-INSERT INTO juzgados (nombre, fuero, secretaria, edificio_id) VALUES
-    ('Juzgado Civil y Comercial N°1',   'Civil',    'Secretaría N°1', 1),
-    ('Juzgado Civil y Comercial N°2',   'Civil',    'Secretaría N°2', 1),
-    ('Juzgado Penal N°1',               'Penal',    'Secretaría N°1', 2),
-    ('Juzgado Laboral N°1',             'Laboral',  'Secretaría N°1', 3),
-    ('Juzgado de Familia N°1',          'Familia',  'Secretaría N°1', 3),
-    ('Juzgado Penal N°2',               'Penal',    'Secretaría N°2', 4),
-    ('Juzgado Civil Venado Tuerto',     'Civil',    'Secretaría N°1', 5)
-ON CONFLICT DO NOTHING;
+-- Juzgados (DataInitializer crea 3)
+INSERT INTO juzgados (id, nombre, fuero, secretaria, edificio_id) VALUES
+    (1, 'Juzgado Civil y Comercial Nro 1', 'Civil',    'Secretaría 1',     1),
+    (2, 'Juzgado Penal Nro 3',             'Penal',    'Secretaría 1',     2),
+    (3, 'Juzgado Laboral Nro 2',           'Laboral',  'Secretaría Única', 1)
+ON CONFLICT (id) DO NOTHING;
 
--- Usuarios (contraseñas alineadas con DataInitializer y README)
--- admin → admin123 | operador → oper123 | tecnico → tec123
-INSERT INTO users (username, password, full_name, email, role, juzgado_id) VALUES
-    ('admin',    '$2a$10$RAgIHj9UR0/rpPSb823laub.t.ipUgmaNO/V.z/ki60nn9X97vqdG', 'María García (Admin)',   'admin@poderjudicial.gov.ar',    'ADMINISTRADOR', 1),
-    ('operador', '$2a$10$dk8BGferFMB7t.ojWi9Wn.z2dxn8Oxl/lupmxp4jrD0n0d11.t5re', 'Carlos López (Operador)','operador@poderjudicial.gov.ar', 'OPERADOR',      1),
-    ('tecnico',  '$2a$10$yYsd7Hnv6/ReaqktyFL0A.3.XGzCzAEw9WapS/kPCtvACtDdWmb3K', 'Ana Martínez (Técnica)', 'tecnico@poderjudicial.gov.ar',  'TECNICO',       NULL)
+-- Usuarios (DataInitializer crea 3)
+-- Passwords: admin → admin123 | operador → oper123 | tecnico → tec123
+INSERT INTO users (id, username, password, full_name, email, role, juzgado_id) VALUES
+    (1, 'admin',    '$2a$10$HURzhrjYCBjP6w7rzw2y2Or.oEzAYzQkaOBqOmJl7EsCpJSD.znfq', 'María García (Admin)',      'admin@poderjudicial.gov.ar',    'ADMINISTRADOR', 1),
+    (2, 'operador', '$2a$10$3GA2PAnBIA8RXtUp0.oZRuYae5bvRZ8XETvTRQ0YnjYtZcDuDmk1W', 'Carlos López (Operador)',   'operador@poderjudicial.gov.ar', 'OPERADOR',      1),
+    (3, 'tecnico',  '$2a$10$SU7eMndiW8QS6WCfpbX/fOf6cucRUu5UwSy2wjtFIb5hRUgR.8F9W', 'Ana Martínez (Técnica)',    'tecnico@poderjudicial.gov.ar',  'TECNICO',       NULL)
 ON CONFLICT (username) DO NOTHING;
 
--- Hardware
-INSERT INTO hardware (inventario_patrimonial, numero_serie, clase, tipo, marca, modelo, estado, juzgado_id, ubicacion_fisica) VALUES
-    ('INV-001-0001', 'SN-ABC-001', 'PC',        'Desktop',     'Lenovo',  'ThinkCentre M720',  'ACTIVO',        1, 'Puesto 1 - Secretaría'),
-    ('INV-001-0002', 'SN-ABC-002', 'PC',        'All-in-One',  'HP',      'ProOne 440 G6',     'ACTIVO',        1, 'Puesto 2 - Despacho Juez'),
-    ('INV-001-0003', 'SN-ABC-003', 'Impresora', 'Láser',       'Brother', 'HL-L2360DW',        'ACTIVO',        2, 'Área común'),
-    ('INV-002-0001', 'SN-DEF-001', 'Servidor',  'Rack',        'Dell',    'PowerEdge R740',    'ACTIVO',        NULL, 'Datacenter Principal'),
-    ('INV-003-0001', 'SN-GHI-001', 'PC',        'Notebook',    'Lenovo',  'ThinkPad T490',     'EN_REPARACION', 3, 'Puesto 3 - Sala Audiencias')
+-- Hardware (DataInitializer crea 4)
+INSERT INTO hardware (id, inventario_patrimonial, numero_serie, clase, tipo, marca, modelo, estado, juzgado_id, ubicacion_fisica) VALUES
+    (1, 'INV-001-0001', 'SN-DELL-001',     'PC',        'Desktop',   'Dell',  'OptiPlex 7090',           'ACTIVO', 1,    'Puesto Secretario'),
+    (2, 'INV-001-0002', 'SN-HP-002',       'PC',        'All-in-One','HP',    'ProOne 440 G9',           'ACTIVO', 2,    'Puesto Juez'),
+    (3, 'INV-002-0001', 'SN-EPSON-001',    'Impresora', 'Láser',     'Epson', 'WorkForce Pro WF-C5790',  'ACTIVO', 1,    'Mesa Compartida'),
+    (4, 'INV-003-0001', 'SN-DELL-SRV-001', 'Servidor',  'Rack',      'Dell',  'PowerEdge R750',          'ACTIVO', NULL, 'Data Center - Rack 3')
 ON CONFLICT (inventario_patrimonial) DO NOTHING;
 
--- Software
-INSERT INTO software (nombre, version, fabricante, tipo_licencia, numero_licencia, cantidad_licencias, fecha_vencimiento, estado) VALUES
-    ('Microsoft Office 365',    '2024',  'Microsoft',     'Suscripción', 'LIC-MS-001', 150, '2027-03-31', 'ACTIVO'),
-    ('Windows 11 Pro',          '23H2',  'Microsoft',     'OEM',         'LIC-MS-002', 200, NULL,          'ACTIVO'),
-    ('Antivirus Kaspersky',     'v21',   'Kaspersky Lab', 'Anual',       'LIC-KS-001', 200, '2026-12-31', 'ACTIVO'),
-    ('Sistema Lex Doctor',      '12.0',  'Lex Doctor',    'Perpetua',    'LIC-LD-001', 50,  NULL,          'ACTIVO'),
-    ('Adobe Acrobat Pro',       '2024',  'Adobe',         'Suscripción', 'LIC-AD-001', 30,  '2026-06-30', 'ACTIVO')
-ON CONFLICT DO NOTHING;
+-- Software (DataInitializer crea 3)
+INSERT INTO software (id, nombre, version, fabricante, tipo_licencia, cantidad_licencias, fecha_vencimiento, estado) VALUES
+    (1, 'Microsoft Office 365',    '2024', 'Microsoft', 'Suscripción Anual', 500, '2026-12-31', 'ACTIVO'),
+    (2, 'Antivirus ESET Endpoint', '10.1', 'ESET',      'Corporativa',       800, '2026-06-30', 'ACTIVO'),
+    (3, 'Sistema LEX Doctor',      '12.0', 'LEX Doctor', 'Perpetua',          200, NULL,          'ACTIVO')
+ON CONFLICT (id) DO NOTHING;
 
--- Contratos
-INSERT INTO contracts (nombre, proveedor, numero_contrato, fecha_inicio, fecha_fin, cobertura_hw, cobertura_sw, sla_descripcion) VALUES
-    ('Mantenimiento de PCs',   'TechCorp SRL',    'CONT-2025-001', '2025-01-01', '2026-12-31', 'PCs de escritorio y notebooks', NULL, 'Respuesta en 4 horas hábiles. Resolución en 24 horas.'),
-    ('Soporte de Servidores',  'DataCenter SA',    'CONT-2025-002', '2025-03-01', '2026-03-01', 'Servidores Dell PowerEdge',     NULL, 'Soporte 24/7. Resolución en 4 horas.'),
-    ('Licencias Microsoft EA', 'Microsoft',        'CONT-MS-2025',  '2025-01-01', '2027-12-31', NULL, 'Office 365, Windows, Server CALs', 'Renovación anual automática.'),
-    ('Soporte Impresoras',     'PrintServices SA', 'CONT-2025-004', '2025-06-01', '2026-06-01', 'Impresoras Brother y HP', NULL, 'Respuesta en 8 horas hábiles. Incluye tóner.')
-ON CONFLICT DO NOTHING;
+-- Contratos (DataInitializer crea 3)
+INSERT INTO contracts (id, nombre, proveedor, numero_contrato, fecha_inicio, fecha_fin, cobertura_hw, cobertura_sw, sla_descripcion) VALUES
+    (1, 'Soporte HW Dell',         'Dell Argentina S.A.', 'CNT-2024-001', '2024-01-01', '2026-12-31', 'PCs y Servidores Dell',           NULL,                              'Respuesta 4hs hábiles, resolución 24hs'),
+    (2, 'Mantenimiento Impresoras', 'Tecno Print SRL',     'CNT-2024-002', '2024-03-01', '2026-03-15', 'Impresoras Epson y HP',           NULL,                              'Visita técnica en 48hs'),
+    (3, 'Licencias Microsoft EA',   'Microsoft Corp.',     'CNT-2024-003', '2024-01-01', '2026-04-01', NULL,                              'Office 365, Windows, Azure AD',   'Mesa de ayuda 24/7')
+ON CONFLICT (id) DO NOTHING;
 
--- Tickets (solicitante=operador(2), técnico=tecnico(3))
-INSERT INTO tickets (asunto, descripcion, status, prioridad, juzgado_id, solicitante_id, tecnico_asignado_id, hardware_id, bitacora, canal) VALUES
-    ('PC no enciende',                  'La PC del puesto 1 no enciende desde esta mañana.',                 'ASIGNADO',   'ALTA',  1, 2, 3, 1, 'Ticket creado por operador - Asignado a tecnico', 'WEB'),
-    ('Instalar Office en nuevo equipo', 'Se requiere instalación de Office 365 en equipo recién recibido.',  'SOLICITADO', 'MEDIA', 2, 2, NULL, NULL, 'Ticket creado por operador', 'WEB'),
-    ('Impresora atascada',              'La impresora del área común se atasca constantemente.',              'EN_CURSO',   'MEDIA', 2, 2, 3, 3, 'Ticket creado - Técnico en camino', 'PORTAL'),
-    ('Sin acceso a internet',           'No hay conectividad en todo el juzgado desde las 14:00.',           'SOLICITADO', 'ALTA',  1, 2, NULL, NULL, 'Ticket creado por operador', 'EMAIL'),
-    ('Solicitar tóner',                 'Se agotó el tóner de la impresora Brother del piso 2.',             'CERRADO',    'BAJA',  1, 2, 3, 3, 'Solicitado - Tóner reemplazado. Cerrado.', 'PORTAL')
-ON CONFLICT DO NOTHING;
+-- Tickets (DataInitializer crea 4: solicitante=operador(2), técnico=tecnico(3))
+INSERT INTO tickets (id, asunto, descripcion, status, prioridad, juzgado_id, solicitante_id, tecnico_asignado_id, hardware_id, bitacora, canal) VALUES
+    (1, 'Impresora no funciona en Secretaría',
+        'La impresora del puesto del Secretario no enciende desde ayer.',
+        'SOLICITADO', 'MEDIA', 1, 2, NULL, 3,
+        NULL, 'WEB'),
+    (2, 'PC del Juez no inicia - Sala de Audiencias',
+        'La PC del Juez en la Sala de Audiencias no enciende. URGENTE.',
+        'SOLICITADO', 'ALTA', 2, 2, NULL, 2,
+        NULL, 'WEB'),
+    (3, 'Solicitar tóner para impresora',
+        'Se necesita cambio de tóner en la impresora de Mesa Compartida.',
+        'EN_CURSO', 'BAJA', 1, 2, 3, NULL,
+        NULL, 'PORTAL'),
+    (4, 'Instalación de LEX Doctor en nueva PC',
+        'Instalar LEX Doctor 12.0 en la nueva PC del Juzgado Laboral.',
+        'CERRADO', 'MEDIA', 3, 2, 3, NULL,
+        E'[2026-02-20 10:00] operador: Solicitud de instalación\n[2026-02-21 14:30] tecnico: Instalación completada\n', 'WEB')
+ON CONFLICT (id) DO NOTHING;
+
+-- Reset sequences para que los próximos INSERTs usen IDs consecutivos
+SELECT setval('circunscripciones_id_seq', (SELECT MAX(id) FROM circunscripciones));
+SELECT setval('distritos_id_seq',         (SELECT MAX(id) FROM distritos));
+SELECT setval('edificios_id_seq',         (SELECT MAX(id) FROM edificios));
+SELECT setval('juzgados_id_seq',          (SELECT MAX(id) FROM juzgados));
+SELECT setval('users_id_seq',             (SELECT MAX(id) FROM users));
+SELECT setval('hardware_id_seq',          (SELECT MAX(id) FROM hardware));
+SELECT setval('software_id_seq',          (SELECT MAX(id) FROM software));
+SELECT setval('contracts_id_seq',         (SELECT MAX(id) FROM contracts));
+SELECT setval('tickets_id_seq',           (SELECT MAX(id) FROM tickets));

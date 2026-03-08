@@ -90,13 +90,6 @@ public class TicketService {
         }
 
         @Transactional(readOnly = true)
-        public List<TicketResponse> findAll() {
-                return ticketRepository.findAllByDeletedFalse().stream()
-                                .map(this::toResponse)
-                                .toList();
-        }
-
-        @Transactional(readOnly = true)
         public TicketResponse findById(Long id) {
                 Ticket ticket = ticketRepository.findById(id)
                                 .filter(t -> !t.getDeleted())

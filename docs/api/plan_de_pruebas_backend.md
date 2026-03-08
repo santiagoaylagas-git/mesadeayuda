@@ -46,8 +46,8 @@ Verificar el correcto funcionamiento de todos los endpoints REST del backend SOJ
 | EP-01 | `/api/auth/login` | POST | Happy Path | 200 + token JWT + role=ADMINISTRADOR |
 | EP-02 | `/api/auth/login` | POST | Happy Path | 200 + token JWT + role=OPERADOR |
 | EP-03 | `/api/auth/login` | POST | Happy Path | 200 + token JWT + role=TECNICO |
-| EP-04 | `/api/auth/login` | POST | Error | 409 — Password incorrecta |
-| EP-05 | `/api/auth/login` | POST | Error | 409 — Usuario inexistente |
+| EP-04 | `/api/auth/login` | POST | Error | 401 — Password incorrecta |
+| EP-05 | `/api/auth/login` | POST | Error | 401 — Usuario inexistente |
 | EP-06 | `/api/auth/me` | GET | Happy Path | 200 + datos del usuario autenticado |
 | EP-07 | `/api/auth/me` | GET | Acceso | 403 — Sin token |
 

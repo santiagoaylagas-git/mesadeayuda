@@ -79,8 +79,8 @@ public class DataInitializer implements CommandLineRunner {
                 circ2 = circunscripcionRepository.save(circ2);
 
                 // Obtener referencias administradas después del cascade
-                edifTribSF = circ1.getDistritos().get(0).getEdificios().get(0);
-                edifTribROS = circ2.getDistritos().get(0).getEdificios().get(0);
+                edifTribSF = circ1.getDistritos().iterator().next().getEdificios().iterator().next();
+                edifTribROS = circ2.getDistritos().iterator().next().getEdificios().iterator().next();
 
                 // Juzgados
                 Juzgado juz1 = juzgadoRepository.save(Juzgado.builder()

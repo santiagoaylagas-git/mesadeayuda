@@ -64,7 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/inventory/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasAnyRole("ADMINISTRADOR", "TECNICO")
                         .requestMatchers(HttpMethod.PUT, "/api/inventory/**").hasAnyRole("ADMINISTRADOR", "TECNICO")
-                        .requestMatchers(HttpMethod.DELETE, "/api/inventory/**").hasAnyRole("ADMINISTRADOR", "TECNICO")
+                        .requestMatchers(HttpMethod.DELETE, "/api/inventory/**").hasRole("ADMINISTRADOR")
 
                         // --- Contratos: lectura ADMIN/OPERADOR, escritura solo ADMIN ---
                         .requestMatchers(HttpMethod.GET, "/api/contracts/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")

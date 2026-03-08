@@ -21,8 +21,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "distritos")
@@ -54,7 +54,7 @@ public class Distrito {
     @OneToMany(mappedBy = "distrito", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     @JsonManagedReference("distrito-edificios")
-    private List<Edificio> edificios = new ArrayList<>();
+    private Set<Edificio> edificios = new HashSet<>();
 
     @Column(nullable = false, updatable = false)
     @Builder.Default

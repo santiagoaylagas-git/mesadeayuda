@@ -1,13 +1,15 @@
 package com.sojus.controller;
 
+import com.sojus.domain.entity.User;
 import com.sojus.dto.ContractRequest;
 import com.sojus.dto.ContractResponse;
 import com.sojus.service.ContractService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/contracts")
 @RequiredArgsConstructor
+@Tag(name = "Contratos", description = "Gestión de contratos con proveedores")
 public class ContractController {
 
     private final ContractService contractService;
@@ -45,22 +48,22 @@ public class ContractController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ContractResponse create(@Valid @RequestBody ContractRequest request,
-            Authentication auth) {
-        return contractService.create(request, auth.getName());
+            @AuthenticationPrincipal User user) {
+        return contractService.create(request, user.getUsername());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ContractResponse update(@PathVariable Long id,
             @Valid @RequestBody ContractRequest request,
-            Authentication auth) {
-        return contractService.update(id, request, auth.getName());
+            @AuthenticationPrincipal User user) {
+        return contractService.update(id, request, user.getUsername());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public void deactivate(@PathVariable Long id, Authentication auth) {
-        contractService.deactivate(id, auth.getName());
+    public void deactivate(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        contractService.deactivate(id, user.getUsername());
     }
 }

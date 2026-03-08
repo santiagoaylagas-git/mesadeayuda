@@ -72,7 +72,7 @@ npx expo start
 ```
 
 ### Postman
-1. Importar `docs/api/postman/SOJUS_API.postman_collection.json`
+1. Importar `docs/api/postman/SOJUS_Fase2.postman_collection.json`
 2. Ejecutar "Login (Admin)" → el token se guarda automáticamente
 3. Probar los demás endpoints
 

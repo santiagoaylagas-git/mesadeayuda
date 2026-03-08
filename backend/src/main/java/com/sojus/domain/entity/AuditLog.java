@@ -29,7 +29,7 @@ public class AuditLog {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 100)
     private String entityName;
 
     private Long entityId;

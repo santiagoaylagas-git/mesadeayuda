@@ -223,7 +223,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Respuesta < 2s', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
-                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
                   "pm.test('No retorna token', () => pm.expect(pm.response.json().token).to.be.undefined);"
                 ]
               }
@@ -275,7 +275,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Respuesta < 2s', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
-                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
                   "pm.test('No retorna token', () => pm.expect(pm.response.json().token).to.be.undefined);"
                 ]
               }
@@ -2459,7 +2459,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"user_postman_test\",\n  \"password\": \"test123\",\n  \"fullName\": \"Usuario Postman Test\",\n  \"email\": \"postman@test.com\",\n  \"role\": \"OPERADOR\"\n}"
+              "raw": "{\n  \"username\": \"user_pt_{{$timestamp}}\",\n  \"password\": \"test123\",\n  \"fullName\": \"Usuario Postman Test\",\n  \"email\": \"postman@test.com\",\n  \"role\": \"OPERADOR\"\n}"
             }
           },
           "response": [],
@@ -2474,7 +2474,7 @@
                   "var json = pm.response.json();",
                   "pm.test('Sin password en resp', () => pm.expect(json.password).to.be.undefined);",
                   "pm.test('Tiene id numerico', () => pm.expect(json.id).to.be.a('number'));",
-                  "pm.test('Username correcto', () => pm.expect(json.username).to.eql('user_postman_test'));",
+                  "pm.test('Username contiene prefijo', () => pm.expect(json.username).to.include('user_pt_'));",
                   "pm.test('Role correcto', () => pm.expect(json.role).to.eql('OPERADOR'));",
                   "pm.environment.set('user_id', json.id);"
                 ]
@@ -2642,14 +2642,14 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/users/2",
+              "raw": "{{base_url}}/api/users/{{user_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "users",
-                "2"
+                "{{user_id}}"
               ]
             },
             "auth": {
@@ -2869,10 +2869,10 @@
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "var json = pm.response.json();",
                   "pm.test('Tiene ticketsAbiertos', () => pm.expect(json.ticketsAbiertos).to.be.a('number'));",
-                  "pm.test('Tiene ticketsCerrados', () => pm.expect(json.ticketsCerrados).to.be.a('number'));",
+                  "pm.test('Tiene ticketsCerradosMes', () => pm.expect(json.ticketsCerradosMes).to.be.a('number'));",
                   "pm.test('Tiene totalHardware', () => pm.expect(json.totalHardware).to.be.a('number'));",
                   "pm.test('Tiene totalSoftware', () => pm.expect(json.totalSoftware).to.be.a('number'));",
-                  "pm.test('Metricas coherentes', () => pm.expect(json.ticketsAbiertos + json.ticketsCerrados).to.be.at.least(0));"
+                  "pm.test('Metricas coherentes', () => pm.expect(json.ticketsAbiertos + json.ticketsCerradosMes).to.be.at.least(0));"
                 ]
               }
             }
