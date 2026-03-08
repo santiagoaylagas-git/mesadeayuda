@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,7 +64,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+        String message = ex.getMessage();
+        // Mejorar mensajes de enum.valueOf() para el usuario
+        if (message != null && message.contains("No enum constant")) {
+            String value = message.substring(message.lastIndexOf('.') + 1);
+            message = "Valor '" + value + "' no es válido para el campo indicado";
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<Map<String, Object>> handleDateTimeParse(DateTimeParseException ex) {
+        log.warn("Error de formato de fecha: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Formato de fecha inválido. Use el formato ISO: yyyy-MM-dd (ej: 2024-12-31)");
     }
 
     @ExceptionHandler(AccessDeniedException.class)

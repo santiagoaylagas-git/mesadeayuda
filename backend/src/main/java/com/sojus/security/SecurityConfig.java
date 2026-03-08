@@ -28,6 +28,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:8081,http://localhost:19006}")
     private String allowedOrigins;
@@ -78,6 +79,17 @@ public class SecurityConfig {
                         // --- Todo lo demás requiere autenticación ---
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(403);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"timestamp\":\"" + java.time.LocalDateTime.now() + "\","
+                                            + "\"status\":403,"
+                                            + "\"error\":\"Forbidden\","
+                                            + "\"message\":\"No tiene permisos para realizar esta operación\"}");
+                        }))
                 // Para H2 console
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 

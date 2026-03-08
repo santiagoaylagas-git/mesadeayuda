@@ -90,7 +90,7 @@ class UserServiceTest {
             });
             when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            UserResponse result = userService.createFromRequest(request);
+            UserResponse result = userService.createFromRequest(request, "admin");
 
             assertThat(result.getId()).isEqualTo(10L);
             assertThat(result.getUsername()).isEqualTo("nuevo");
@@ -108,7 +108,7 @@ class UserServiceTest {
 
             when(userRepository.existsByUsername("admin")).thenReturn(true);
 
-            assertThatThrownBy(() -> userService.createFromRequest(request))
+            assertThatThrownBy(() -> userService.createFromRequest(request, "admin"))
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("ya existe");
         }
@@ -134,7 +134,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            UserResponse result = userService.updateFromRequest(1L, request);
+            UserResponse result = userService.updateFromRequest(1L, request, "admin");
 
             assertThat(result.getFullName()).isEqualTo("Admin Actualizado");
             assertThat(result.getEmail()).isEqualTo("new@test.com");
@@ -155,7 +155,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            userService.updateFromRequest(1L, request);
+            userService.updateFromRequest(1L, request, "admin");
 
             verify(passwordEncoder).encode("newpass");
         }
@@ -174,7 +174,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            userService.updateFromRequest(1L, request);
+            userService.updateFromRequest(1L, request, "admin");
 
             verify(passwordEncoder, never()).encode(anyString());
         }
@@ -194,7 +194,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
-            userService.softDelete(2L);
+            userService.softDelete(2L, "admin");
 
             assertThat(tecnicoUser.getDeleted()).isTrue();
             assertThat(tecnicoUser.getActive()).isFalse();
@@ -205,7 +205,7 @@ class UserServiceTest {
         void softDelete_noExiste() {
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> userService.softDelete(999L))
+            assertThatThrownBy(() -> userService.softDelete(999L, "admin"))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }

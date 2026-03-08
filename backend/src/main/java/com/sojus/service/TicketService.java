@@ -177,6 +177,12 @@ public class TicketService {
                                                         oldStatus, newStatus, oldStatus, allowedTransitions));
                 }
 
+                // Regla de negocio: ASIGNADO requiere técnico
+                if (newStatus == TicketStatus.ASIGNADO && request.getTecnicoId() == null) {
+                        throw new BusinessRuleException(
+                                        "Para asignar un ticket es obligatorio indicar el técnico (tecnicoId)");
+                }
+
                 ticket.setStatus(newStatus);
 
                 // Asignar técnico si se proporciona — validando que sea TECNICO

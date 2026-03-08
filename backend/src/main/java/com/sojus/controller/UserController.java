@@ -1,5 +1,6 @@
 package com.sojus.controller;
 
+import com.sojus.domain.entity.User;
 import com.sojus.domain.enums.RoleName;
 import com.sojus.dto.UserCreateRequest;
 import com.sojus.dto.UserResponse;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -62,8 +64,9 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "409", description = "Nombre de usuario ya existe")
     })
-    public UserResponse create(@Valid @RequestBody UserCreateRequest request) {
-        return userService.createFromRequest(request);
+    public UserResponse create(@Valid @RequestBody UserCreateRequest request,
+            @AuthenticationPrincipal User user) {
+        return userService.createFromRequest(request, user.getUsername());
     }
 
     @PutMapping("/{id}")
@@ -74,8 +77,9 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     })
     public UserResponse update(@PathVariable Long id,
-            @Valid @RequestBody UserUpdateRequest request) {
-        return userService.updateFromRequest(id, request);
+            @Valid @RequestBody UserUpdateRequest request,
+            @AuthenticationPrincipal User user) {
+        return userService.updateFromRequest(id, request, user.getUsername());
     }
 
     @DeleteMapping("/{id}")
@@ -85,7 +89,7 @@ public class UserController {
             @ApiResponse(responseCode = "204", description = "Usuario eliminado exitosamente"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
     })
-    public void delete(@PathVariable Long id) {
-        userService.softDelete(id);
+    public void delete(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        userService.softDelete(id, user.getUsername());
     }
 }

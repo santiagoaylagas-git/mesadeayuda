@@ -63,7 +63,7 @@ public class UserService {
      * Encripta la contraseña y valida unicidad del username.
      */
     @Transactional
-    public UserResponse createFromRequest(UserCreateRequest request) {
+    public UserResponse createFromRequest(UserCreateRequest request, String username) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessRuleException("El nombre de usuario ya existe");
         }
@@ -87,7 +87,7 @@ public class UserService {
 
         auditLogRepository.save(AuditLog.builder()
                 .entityName("User").entityId(saved.getId())
-                .action("CREAR").username("admin")
+                .action("CREAR").username(username)
                 .newValue("Usuario creado: " + saved.getUsername() + " (rol: " + saved.getRole() + ")")
                 .build());
 
@@ -99,7 +99,7 @@ public class UserService {
      * La contraseña solo se actualiza si se proporciona (no vacía).
      */
     @Transactional
-    public UserResponse updateFromRequest(Long id, UserUpdateRequest request) {
+    public UserResponse updateFromRequest(Long id, UserUpdateRequest request, String username) {
         User existing = findById(id);
         String oldRole = existing.getRole().name();
 
@@ -117,7 +117,7 @@ public class UserService {
 
         auditLogRepository.save(AuditLog.builder()
                 .entityName("User").entityId(saved.getId())
-                .action("ACTUALIZAR").username("admin")
+                .action("ACTUALIZAR").username(username)
                 .field("role")
                 .oldValue(oldRole)
                 .newValue(saved.getRole().name())
@@ -130,7 +130,7 @@ public class UserService {
      * Soft-delete: marca al usuario como eliminado y desactivado.
      */
     @Transactional
-    public void softDelete(Long id) {
+    public void softDelete(Long id, String username) {
         User user = findById(id);
         user.setDeleted(true);
         user.setActive(false);
@@ -139,7 +139,7 @@ public class UserService {
 
         auditLogRepository.save(AuditLog.builder()
                 .entityName("User").entityId(id)
-                .action("ELIMINAR").username("admin")
+                .action("ELIMINAR").username(username)
                 .oldValue("activo").newValue("eliminado")
                 .build());
     }

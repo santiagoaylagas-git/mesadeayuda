@@ -293,6 +293,23 @@ class TicketServiceTest {
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("no tiene rol TECNICO");
         }
+
+        @Test
+        @DisplayName("ASIGNADO sin tecnicoId debe fallar (regla de negocio)")
+        void cambioEstado_asignadoSinTecnico() {
+            Ticket ticket = Ticket.builder().id(1L).asunto("Test").status(TicketStatus.SOLICITADO)
+                    .prioridad(Priority.MEDIA).deleted(false).createdAt(LocalDateTime.now()).build();
+
+            StatusChangeRequest req = new StatusChangeRequest();
+            req.setStatus("ASIGNADO");
+            // No se proporciona tecnicoId
+
+            when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+
+            assertThatThrownBy(() -> ticketService.changeStatus(1L, req, "admin"))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("obligatorio indicar el técnico");
+        }
     }
 
     // ================================================================

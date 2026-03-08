@@ -2,6 +2,7 @@ package com.sojus.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class TicketRequest {
     @Schema(description = "Descripción detallada del problema")
     private String descripcion;
 
+    @Pattern(regexp = "ALTA|MEDIA|BAJA", message = "Prioridad inválida. Valores permitidos: ALTA, MEDIA, BAJA")
     @Schema(description = "Nivel de prioridad", example = "MEDIA", allowableValues = { "ALTA", "MEDIA", "BAJA" })
     private String prioridad; // ALTA, MEDIA, BAJA
 
@@ -29,6 +31,7 @@ public class TicketRequest {
     @Schema(description = "ID del hardware afectado (opcional)")
     private Long hardwareId;
 
+    @Pattern(regexp = "WEB|PORTAL|EMAIL", message = "Canal inválido. Valores permitidos: WEB, PORTAL, EMAIL")
     @Schema(description = "Canal de ingreso", example = "WEB", allowableValues = { "WEB", "PORTAL", "EMAIL" })
     private String canal; // WEB, PORTAL, EMAIL
 }
