@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,8 +20,17 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Filtro JWT que autentica cada request a partir del token Bearer.
+ * Valida que:
+ * 1. El token sea válido y no haya expirado
+ * 2. El usuario exista y no esté eliminado (soft-delete)
+ * 3. El usuario siga activo (un admin puede desactivar un usuario
+ * y su token JWT vigente debe dejar de funcionar)
+ */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
@@ -41,11 +51,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        user, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Verificar que el usuario siga activo
+                if (!user.getActive()) {
+                    log.warn("Token JWT válido pero usuario '{}' está desactivado — rechazando", username);
+                    // No autenticar: la request continuará como anónima → 401/403
+                } else {
+                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            user, null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         }
 

@@ -6,6 +6,8 @@ import com.sojus.dto.TicketRequest;
 import com.sojus.dto.TicketResponse;
 import com.sojus.service.TicketService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,26 +28,37 @@ public class TicketController {
     private final TicketService ticketService;
 
     @GetMapping
-    @Operation(summary = "Listar todos los tickets")
+    @Operation(summary = "Listar todos los tickets", description = "ADMIN/OPERADOR ven todos; TECNICO solo los asignados")
+    @ApiResponse(responseCode = "200", description = "Lista de tickets obtenida exitosamente")
     public ResponseEntity<List<TicketResponse>> findAll(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(ticketService.findAllForUser(user));
     }
 
     @GetMapping("/my")
     @Operation(summary = "Listar tickets asignados al usuario autenticado")
+    @ApiResponse(responseCode = "200", description = "Lista de tickets del usuario")
     public ResponseEntity<List<TicketResponse>> findMyTickets(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(ticketService.findByUser(user));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener ticket por ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ticket encontrado"),
+            @ApiResponse(responseCode = "404", description = "Ticket no encontrado")
+    })
     public ResponseEntity<TicketResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.findById(id));
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
-    @Operation(summary = "Crear nuevo ticket")
+    @Operation(summary = "Crear nuevo ticket", description = "Se aplica prioridad ALTA automática si el asunto contiene 'juez', 'audiencia' o 'sala'")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Ticket creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "409", description = "El hardware ya tiene un ticket activo")
+    })
     public ResponseEntity<TicketResponse> create(
             @Valid @RequestBody TicketRequest request,
             @AuthenticationPrincipal User user) {
@@ -55,7 +68,12 @@ public class TicketController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'TECNICO')")
-    @Operation(summary = "Cambiar estado del ticket")
+    @Operation(summary = "Cambiar estado del ticket", description = "Transiciones válidas: SOLICITADO→ASIGNADO→EN_CURSO→CERRADO")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado actualizado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Ticket no encontrado"),
+            @ApiResponse(responseCode = "409", description = "Transición de estado inválida")
+    })
     public ResponseEntity<TicketResponse> changeStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusChangeRequest request,
@@ -67,6 +85,10 @@ public class TicketController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @Operation(summary = "Eliminar ticket (soft delete)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ticket eliminado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Ticket no encontrado")
+    })
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {

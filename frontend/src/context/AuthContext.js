@@ -29,9 +29,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const login = async (username, password) => {
+    const login = async (username, password, captchaToken) => {
         try {
-            const response = await authAPI.login(username, password);
+            const response = await authAPI.login(username, password, captchaToken);
             const { token: jwt, ...userData } = response.data;
 
             await AsyncStorage.setItem('token', jwt);

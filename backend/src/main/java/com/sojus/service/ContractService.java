@@ -4,6 +4,7 @@ import com.sojus.domain.entity.AuditLog;
 import com.sojus.domain.entity.Contract;
 import com.sojus.dto.ContractRequest;
 import com.sojus.dto.ContractResponse;
+import com.sojus.exception.BusinessRuleException;
 import com.sojus.exception.ResourceNotFoundException;
 import com.sojus.repository.AuditLogRepository;
 import com.sojus.repository.ContractRepository;
@@ -56,6 +57,8 @@ public class ContractService {
      */
     @Transactional
     public ContractResponse create(ContractRequest request, String username) {
+        validateDates(request);
+
         Contract contract = Contract.builder()
                 .nombre(request.getNombre())
                 .proveedor(request.getProveedor())
@@ -85,6 +88,7 @@ public class ContractService {
      */
     @Transactional
     public ContractResponse update(Long id, ContractRequest request, String username) {
+        validateDates(request);
         Contract existing = getContractOrThrow(id);
 
         existing.setNombre(request.getNombre());
@@ -140,6 +144,14 @@ public class ContractService {
     // ================================================================
     // MÉTODOS AUXILIARES
     // ================================================================
+
+    private void validateDates(ContractRequest request) {
+        if (request.getFechaInicio() != null && request.getFechaFin() != null
+                && request.getFechaInicio().isAfter(request.getFechaFin())) {
+            throw new BusinessRuleException(
+                    "La fecha de inicio no puede ser posterior a la fecha de fin del contrato");
+        }
+    }
 
     private Contract getContractOrThrow(Long id) {
         return contractRepository.findById(id)

@@ -36,8 +36,8 @@ api.interceptors.response.use(
 
 // ---- Auth ----
 export const authAPI = {
-    login: (username, password) =>
-        api.post('/api/auth/login', { username, password }),
+    login: (username, password, captchaToken) =>
+        api.post('/api/auth/login', { username, password, captchaToken }),
     me: () => api.get('/api/auth/me'),
 };
 

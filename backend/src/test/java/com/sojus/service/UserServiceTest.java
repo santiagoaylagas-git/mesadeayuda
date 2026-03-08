@@ -1,5 +1,6 @@
 package com.sojus.service;
 
+import com.sojus.domain.entity.AuditLog;
 import com.sojus.domain.entity.User;
 import com.sojus.domain.enums.RoleName;
 import com.sojus.dto.UserCreateRequest;
@@ -7,6 +8,7 @@ import com.sojus.dto.UserResponse;
 import com.sojus.dto.UserUpdateRequest;
 import com.sojus.exception.BusinessRuleException;
 import com.sojus.exception.ResourceNotFoundException;
+import com.sojus.repository.AuditLogRepository;
 import com.sojus.repository.JuzgadoRepository;
 import com.sojus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +40,8 @@ class UserServiceTest {
     private JuzgadoRepository juzgadoRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private AuditLogRepository auditLogRepository;
 
     @InjectMocks
     private UserService userService;
@@ -84,6 +88,7 @@ class UserServiceTest {
                 u.setCreatedAt(LocalDateTime.now());
                 return u;
             });
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
             UserResponse result = userService.createFromRequest(request);
 
@@ -127,6 +132,7 @@ class UserServiceTest {
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
             UserResponse result = userService.updateFromRequest(1L, request);
 
@@ -147,6 +153,7 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
             when(passwordEncoder.encode("newpass")).thenReturn("$2a$newencoded");
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
             userService.updateFromRequest(1L, request);
 
@@ -165,6 +172,7 @@ class UserServiceTest {
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
             userService.updateFromRequest(1L, request);
 
@@ -184,6 +192,7 @@ class UserServiceTest {
         void softDelete_exitoso() {
             when(userRepository.findById(2L)).thenReturn(Optional.of(tecnicoUser));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
             userService.softDelete(2L);
 

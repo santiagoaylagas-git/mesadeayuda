@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Recaptcha from 'react-native-recaptcha-that-works';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
 
@@ -20,15 +21,21 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const recaptchaRef = useRef();
 
-    const handleLogin = async () => {
+    const handleLogin = () => {
         if (!username.trim() || !password.trim()) {
             Alert.alert('Error', 'Ingresá usuario y contraseña');
             return;
         }
 
+        // En lugar de hacer login directo, disparamos el captcha
         setLoading(true);
-        const result = await login(username.trim(), password);
+        recaptchaRef.current.open();
+    };
+
+    const handleCaptchaVerify = async (token) => {
+        const result = await login(username.trim(), password, token);
         setLoading(false);
 
         if (!result.success) {
@@ -36,12 +43,17 @@ export default function LoginScreen() {
         }
     };
 
+    const handleCaptchaClose = () => {
+        setLoading(false);
+    };
+
     // Acceso rápido demo
     const quickLogin = async (user, pass) => {
         setUsername(user);
         setPassword(pass);
         setLoading(true);
-        const result = await login(user, pass);
+        // Para el login de prueba rápido desde UI, mandamos un token de test
+        const result = await login(user, pass, "demo-token");
         setLoading(false);
         if (!result.success) {
             Alert.alert('Error', result.error);
@@ -53,6 +65,15 @@ export default function LoginScreen() {
             style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
+            <Recaptcha
+                ref={recaptchaRef}
+                siteKey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Clave SITE KEY de desarrollo de Google
+                baseUrl="http://localhost"
+                onVerify={handleCaptchaVerify}
+                onClose={handleCaptchaClose}
+                size="invisible"
+            />
+
             {/* Background gradient effect */}
             <View style={styles.bgAccent} />
 

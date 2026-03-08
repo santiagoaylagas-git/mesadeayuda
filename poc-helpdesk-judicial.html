@@ -968,6 +968,80 @@
             min-height: 1.3rem;
         }
 
+        /* ===== CAPTCHA WIDGET ===== */
+        .captcha-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            user-select: none;
+        }
+
+        .captcha-box:hover {
+            border-color: rgba(3, 105, 161, 0.4);
+            background: rgba(3, 105, 161, 0.06);
+        }
+
+        .captcha-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .captcha-box.checked .captcha-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .captcha-checkbox .material-symbols-outlined {
+            font-size: 16px;
+            color: #fff;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .captcha-box.checked .captcha-checkbox .material-symbols-outlined {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .captcha-label {
+            flex: 1;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 0.88rem;
+        }
+
+        .captcha-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1px;
+        }
+
+        .captcha-brand .material-symbols-outlined {
+            font-size: 22px;
+            color: rgba(3, 105, 161, 0.7);
+        }
+
+        .captcha-brand span:last-child {
+            font-size: 0.55rem;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 0.5px;
+        }
+
         .login-hint {
             margin-top: 1.5rem;
             color: #3c4b62;
@@ -1447,6 +1521,19 @@
                     <input type="password" id="login-pass" placeholder="Contraseña"
                         onkeydown="if(event.key==='Enter') handleLogin()">
                 </div>
+
+                <!-- Captcha Widget -->
+                <div class="captcha-box" id="captcha-box" onclick="toggleCaptcha()">
+                    <div class="captcha-checkbox">
+                        <span class="material-symbols-outlined">check</span>
+                    </div>
+                    <span class="captcha-label">No soy un robot</span>
+                    <div class="captcha-brand">
+                        <span class="material-symbols-outlined">shield</span>
+                        <span>reCAPTCHA</span>
+                    </div>
+                </div>
+
                 <button class="login-btn" onclick="handleLogin()">
                     <span class="material-symbols-outlined">login</span>
                     Iniciar Sesión
@@ -2792,6 +2879,19 @@
         };
 
         let selectedLoginRole = null;
+        let captchaChecked = false;
+
+        // Toggle captcha checkbox
+        function toggleCaptcha() {
+            captchaChecked = !captchaChecked;
+            const box = document.getElementById('captcha-box');
+            box.classList.toggle('checked', captchaChecked);
+            // Clear error if captcha is now checked
+            if (captchaChecked) {
+                const errEl = document.getElementById('login-error');
+                if (errEl.textContent.includes('reCAPTCHA')) errEl.textContent = '';
+            }
+        }
 
         function selectLoginRole(role) {
             selectedLoginRole = role;
@@ -2807,6 +2907,10 @@
             document.getElementById('login-error').textContent = '';
             document.getElementById('login-user').focus();
 
+            // Reset captcha
+            captchaChecked = false;
+            document.getElementById('captcha-box').classList.remove('checked');
+
             // Show hint
             const creds = MOCK_CREDENTIALS[role];
             document.getElementById('login-hint').innerHTML =
@@ -2819,6 +2923,12 @@
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
             const creds = MOCK_CREDENTIALS[selectedLoginRole];
+
+            // Verify captcha checkbox
+            if (!captchaChecked) {
+                document.getElementById('login-error').textContent = '⚠️ Por favor, completa el reCAPTCHA.';
+                return;
+            }
 
             if (user === creds.user && pass === creds.pass) {
                 // Success — enter the app

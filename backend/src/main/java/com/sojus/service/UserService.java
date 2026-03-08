@@ -1,5 +1,6 @@
 package com.sojus.service;
 
+import com.sojus.domain.entity.AuditLog;
 import com.sojus.domain.entity.Juzgado;
 import com.sojus.domain.entity.User;
 import com.sojus.domain.enums.RoleName;
@@ -8,6 +9,7 @@ import com.sojus.dto.UserResponse;
 import com.sojus.dto.UserUpdateRequest;
 import com.sojus.exception.BusinessRuleException;
 import com.sojus.exception.ResourceNotFoundException;
+import com.sojus.repository.AuditLogRepository;
 import com.sojus.repository.JuzgadoRepository;
 import com.sojus.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,7 @@ import java.util.List;
 /**
  * Servicio de gestión de usuarios del sistema.
  * Maneja creación con encriptación BCrypt, actualización, soft-delete,
- * y consultas por rol.
+ * consultas por rol, y registro inmutable de auditoría.
  */
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final JuzgadoRepository juzgadoRepository;
+    private final AuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -81,6 +84,13 @@ public class UserService {
 
         User saved = userRepository.save(user);
         log.info("Usuario creado: {} (rol: {})", saved.getUsername(), saved.getRole());
+
+        auditLogRepository.save(AuditLog.builder()
+                .entityName("User").entityId(saved.getId())
+                .action("CREAR").username("admin")
+                .newValue("Usuario creado: " + saved.getUsername() + " (rol: " + saved.getRole() + ")")
+                .build());
+
         return toResponse(saved);
     }
 
@@ -91,6 +101,8 @@ public class UserService {
     @Transactional
     public UserResponse updateFromRequest(Long id, UserUpdateRequest request) {
         User existing = findById(id);
+        String oldRole = existing.getRole().name();
+
         existing.setFullName(request.getFullName());
         existing.setEmail(request.getEmail());
         existing.setRole(RoleName.valueOf(request.getRole()));
@@ -102,6 +114,15 @@ public class UserService {
         }
         User saved = userRepository.save(existing);
         log.info("Usuario actualizado: {} (ID: {})", saved.getUsername(), saved.getId());
+
+        auditLogRepository.save(AuditLog.builder()
+                .entityName("User").entityId(saved.getId())
+                .action("ACTUALIZAR").username("admin")
+                .field("role")
+                .oldValue(oldRole)
+                .newValue(saved.getRole().name())
+                .build());
+
         return toResponse(saved);
     }
 
@@ -115,6 +136,12 @@ public class UserService {
         user.setActive(false);
         userRepository.save(user);
         log.info("Usuario eliminado (soft): {} (ID: {})", user.getUsername(), id);
+
+        auditLogRepository.save(AuditLog.builder()
+                .entityName("User").entityId(id)
+                .action("ELIMINAR").username("admin")
+                .oldValue("activo").newValue("eliminado")
+                .build());
     }
 
     // ---- Métodos DTO (para controllers) ----

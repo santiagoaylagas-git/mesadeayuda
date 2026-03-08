@@ -3,6 +3,7 @@ package com.sojus.controller;
 import com.sojus.dto.DashboardStats;
 import com.sojus.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
-@Tag(name = "Dashboard", description = "Estadísticas y métricas")
+@Tag(name = "Dashboard", description = "Estadísticas y métricas del sistema")
 public class DashboardController {
 
     private final DashboardService dashboardService;
 
     @GetMapping("/stats")
-    @Operation(summary = "Obtener estadísticas del dashboard")
+    @Operation(summary = "Obtener estadísticas del dashboard", description = "Tickets abiertos/cerrados, prioridad alta, inventario HW/SW, contratos vigentes y próximos a vencer")
+    @ApiResponse(responseCode = "200", description = "Estadísticas obtenidas exitosamente")
     public ResponseEntity<DashboardStats> getStats() {
         return ResponseEntity.ok(dashboardService.getStats());
     }
