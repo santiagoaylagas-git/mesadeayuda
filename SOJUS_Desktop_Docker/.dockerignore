@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+dist/
+*.log
+.env
+.git/
+.gitignore
+*.md
+!01_Repositorio_Frontend/**
+!02_Plan_de_Pruebas_UI/**
+SOJUS_Desktop_Docker/
+placeholder.txt

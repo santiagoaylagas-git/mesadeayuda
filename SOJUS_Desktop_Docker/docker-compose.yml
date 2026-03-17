@@ -1,0 +1,29 @@
+# ============================================================
+# Docker Compose — SOJUS HelpDesk Judicial · Frontend
+# Autor: Santiago Aylagas
+# Fecha: 17 de Marzo de 2026
+# ============================================================
+
+version: '3.8'
+
+services:
+  sojus-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sojus-frontend
+    ports:
+      - "19006:19006"
+    environment:
+      - EXPO_PUBLIC_API_URL=http://host.docker.internal:8080
+      - NODE_ENV=development
+    restart: unless-stopped
+    # Para que host.docker.internal funcione en Linux:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:19006/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
