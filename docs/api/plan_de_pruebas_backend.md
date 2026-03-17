@@ -3,7 +3,7 @@
 **Proyecto:** Sistema de Gestión de Mesa de Ayuda - Poder Judicial  
 **Versión:** 2.0  
 **Fecha:** 2026-03-06  
-**Responsable:** Equipo Backend SOJUS
+**Responsable:** Santiago Aylagas
 
 ---
 

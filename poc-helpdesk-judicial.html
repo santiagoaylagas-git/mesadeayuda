@@ -1546,7 +1546,7 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="brand">
+        <div class="brand" onclick="navTo('dashboard')" style="cursor:pointer;" title="Ir al Panel Principal">
             <img class="brand-shield"
                 src="https://upload.wikimedia.org/wikipedia/commons/8/84/Bandera_de_la_Provincia_de_Santa_Fe.svg"
                 alt="Bandera">
@@ -1594,9 +1594,18 @@
                 <button onclick="toggleTheme()" class="icon-btn" title="Toggle Theme">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
-                <button class="icon-btn">
+                <button class="icon-btn" onclick="toggleNotifications()" title="Notificaciones" style="position:relative;">
                     <span class="material-symbols-outlined">notifications</span>
+                    <span id="notif-badge" style="position:absolute;top:0;right:0;background:var(--danger);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 4px;border-radius:8px;min-width:14px;text-align:center;font-family:var(--font-mono);display:none;"></span>
                 </button>
+                <!-- Notifications dropdown -->
+                <div id="notif-dropdown" style="display:none;position:absolute;top:calc(var(--header-height) - 4px);right:1.5rem;width:380px;max-height:420px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(0,0,0,0.15);z-index:500;overflow:hidden;">
+                    <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                        <h4 style="font-size:0.9rem;font-weight:700;">Notificaciones</h4>
+                        <button onclick="markAllNotificationsRead()" style="background:none;border:none;color:var(--accent);font-size:0.75rem;cursor:pointer;font-family:var(--font-body);">Marcar todas como leídas</button>
+                    </div>
+                    <div id="notif-list" style="overflow-y:auto;max-height:350px;"></div>
+                </div>
             </div>
         </header>
 
@@ -1816,6 +1825,103 @@
                 <button class="btn-modal btn-modal-ghost"
                     onclick="closeFormModal('modal-detalle-ticket')">Cerrar</button>
                 <button class="btn-modal btn-modal-primary" onclick="actualizarTicket()">✔ Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: NUEVO CONTRATO ===== -->
+    <div id="modal-nuevo-contrato" class="form-modal-overlay"
+        onclick="if(event.target===this) closeFormModal('modal-nuevo-contrato')">
+        <div class="form-modal">
+            <div class="form-modal-head">
+                <h3><span class="material-symbols-outlined"
+                        style="vertical-align:middle;margin-right:0.5rem;">verified_user</span>Nuevo Contrato</h3>
+                <button class="icon-btn" onclick="closeFormModal('modal-nuevo-contrato')"><span
+                        class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="form-modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>ID Contrato</label><input id="nc-id" type="text"
+                            placeholder="Ej: CON-HW-2026-01"></div>
+                    <div class="form-group"><label>Nombre</label><input id="nc-nombre" type="text"
+                            placeholder="Ej: Mant. Servidores"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Proveedor</label><input id="nc-proveedor" type="text"
+                            placeholder="Ej: TecnoGlobal S.A."></div>
+                    <div class="form-group"><label>Cobertura</label>
+                        <select id="nc-cobertura">
+                            <option>Hardware</option>
+                            <option>Software</option>
+                            <option>Hardware + Software</option>
+                            <option>Hardware + Insumos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group"><label>Descripción del Servicio</label><textarea id="nc-servicio"
+                            placeholder="Descripción del servicio contratado..."></textarea></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Fecha Inicio</label><input id="nc-inicio" type="date"></div>
+                    <div class="form-group"><label>Fecha Vencimiento</label><input id="nc-fin" type="date"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Alerta (días antes del vencimiento)</label><input id="nc-alerta"
+                            type="number" value="30" min="1"></div>
+                </div>
+            </div>
+            <div class="form-modal-foot">
+                <button class="btn-modal btn-modal-ghost"
+                    onclick="closeFormModal('modal-nuevo-contrato')">Cancelar</button>
+                <button class="btn-modal btn-modal-primary" onclick="crearContrato()">✔ Crear Contrato</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: USUARIO ===== -->
+    <div id="modal-usuario" class="form-modal-overlay"
+        onclick="if(event.target===this) closeFormModal('modal-usuario')">
+        <div class="form-modal">
+            <div class="form-modal-head">
+                <h3 id="mu-titulo"><span class="material-symbols-outlined"
+                        style="vertical-align:middle;margin-right:0.5rem;">person</span>Nuevo Usuario</h3>
+                <button class="icon-btn" onclick="closeFormModal('modal-usuario')"><span
+                        class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="form-modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>Usuario</label><input id="mu-user" type="text"
+                            placeholder="Ej: jperez"></div>
+                    <div class="form-group"><label>Nombre Completo</label><input id="mu-nombre" type="text"
+                            placeholder="Ej: Juan Pérez"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Rol</label>
+                        <select id="mu-rol">
+                            <option>Administrador IT</option>
+                            <option>Operador Mesa Ayuda</option>
+                            <option>Técnico de Soporte</option>
+                            <option>Juez / Solicitante</option>
+                            <option>Secretaria</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Dependencia</label><input id="mu-dep" type="text"
+                            placeholder="Ej: Juz. Civil N°1"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Estado</label>
+                        <select id="mu-activo">
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-modal-foot">
+                <button class="btn-modal btn-modal-ghost"
+                    onclick="closeFormModal('modal-usuario')">Cancelar</button>
+                <button class="btn-modal btn-modal-primary" onclick="guardarUsuario()">✔ Guardar</button>
             </div>
         </div>
     </div>
@@ -2180,16 +2286,48 @@
             document.getElementById('content-area').innerHTML = renderTickets();
         }
 
+        // --- INVENTORY FILTERS ---
+        let invFilterJuzgado = 'all';
+        let invFilterClase = 'all';
+        let invFilterEstado = 'all';
+
+        function setInvFilter(field, value) {
+            if (field === 'juzgado') invFilterJuzgado = value;
+            if (field === 'clase') invFilterClase = value;
+            if (field === 'status') invFilterEstado = value;
+            document.getElementById('content-area').innerHTML = renderInventory();
+        }
+
         function renderInventory() {
+            const juzgados = [...new Set(MOCK_DB.hardware.map(h => h.juzgado))];
+            const clases = [...new Set(MOCK_DB.hardware.map(h => h.clase))];
+            const estados = [...new Set(MOCK_DB.hardware.map(h => h.status))];
+
+            let items = MOCK_DB.hardware;
+            if (invFilterJuzgado !== 'all') items = items.filter(i => i.juzgado === invFilterJuzgado);
+            if (invFilterClase !== 'all') items = items.filter(i => i.clase === invFilterClase);
+            if (invFilterEstado !== 'all') items = items.filter(i => i.status === invFilterEstado);
+
             return `
                 <div class="flex justify-between items-center" style="margin-bottom: 1rem;">
                     <div class="flex gap-2">
-                        <button class="badge badge-neutral" style="padding: 0.5rem 1rem;">Filtro: Juzgado</button>
-                        <button class="badge badge-neutral" style="padding: 0.5rem 1rem;">Filtro: Clase</button>
-                        <button class="badge badge-neutral" style="padding: 0.5rem 1rem;">Filtro: Estado</button>
+                        <select onchange="setInvFilter('juzgado', this.value)" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-body);color:var(--text-main);font-family:var(--font-body);font-size:0.85rem;cursor:pointer;">
+                            <option value="all" ${invFilterJuzgado === 'all' ? 'selected' : ''}>Todos los Juzgados</option>
+                            ${juzgados.map(j => `<option value="${j}" ${invFilterJuzgado === j ? 'selected' : ''}>${j}</option>`).join('')}
+                        </select>
+                        <select onchange="setInvFilter('clase', this.value)" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-body);color:var(--text-main);font-family:var(--font-body);font-size:0.85rem;cursor:pointer;">
+                            <option value="all" ${invFilterClase === 'all' ? 'selected' : ''}>Todas las Clases</option>
+                            ${clases.map(c => `<option value="${c}" ${invFilterClase === c ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                        <select onchange="setInvFilter('status', this.value)" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-body);color:var(--text-main);font-family:var(--font-body);font-size:0.85rem;cursor:pointer;">
+                            <option value="all" ${invFilterEstado === 'all' ? 'selected' : ''}>Todos los Estados</option>
+                            ${estados.map(s => `<option value="${s}" ${invFilterEstado === s ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                        ${(invFilterJuzgado !== 'all' || invFilterClase !== 'all' || invFilterEstado !== 'all') ? `<button onclick="invFilterJuzgado='all';invFilterClase='all';invFilterEstado='all';document.getElementById('content-area').innerHTML=renderInventory();" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--danger);font-size:0.8rem;cursor:pointer;font-family:var(--font-body);">✕ Limpiar filtros</button>` : ''}
                     </div>
                     ${currentUser.role !== 'OPERATOR' ? `<button class="badge badge-success" onclick="openFormModal('modal-nuevo-equipo')" style="padding: 0.5rem 1rem; color: #fff; background: var(--success); border:none; cursor:pointer;">+ Nuevo Activo</button>` : ''}
                 </div>
+                <div class="text-sm text-muted" style="margin-bottom: 0.75rem;">${items.length} equipo(s) encontrado(s)</div>
                 <div class="data-table-container">
                     <table>
                         <thead>
@@ -2206,7 +2344,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${MOCK_DB.hardware.map(i => `
+                            ${items.length === 0 ? `<tr><td colspan="9" style="text-align:center;padding:2rem;" class="text-muted">No se encontraron equipos con los filtros seleccionados.</td></tr>` : items.map(i => `
                                 <tr>
                                     <td class="mono font-bold text-xs">${i.id}</td>
                                     <td>${i.clase}</td>
@@ -2225,14 +2363,39 @@
             `;
         }
 
+        // --- SOFTWARE FILTERS ---
+        let swFilterTipo = 'all';
+        let swFilterLicencia = 'all';
+
+        function setSwFilter(field, value) {
+            if (field === 'tipo') swFilterTipo = value;
+            if (field === 'licencia') swFilterLicencia = value;
+            document.getElementById('content-area').innerHTML = renderSoftware();
+        }
+
         function renderSoftware() {
+            const tipos = [...new Set(MOCK_DB.software.map(s => s.tipo))];
+            const licencias = [...new Set(MOCK_DB.software.map(s => s.licencia))];
+
+            let items = MOCK_DB.software;
+            if (swFilterTipo !== 'all') items = items.filter(s => s.tipo === swFilterTipo);
+            if (swFilterLicencia !== 'all') items = items.filter(s => s.licencia === swFilterLicencia);
+
             return `
                 <div class="flex justify-between items-center" style="margin-bottom: 1rem;">
                     <div class="flex gap-2">
-                        <button class="badge badge-neutral" style="padding: 0.5rem 1rem;">Filtro: Tipo</button>
-                        <button class="badge badge-neutral" style="padding: 0.5rem 1rem;">Filtro: Licencia</button>
+                        <select onchange="setSwFilter('tipo', this.value)" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-body);color:var(--text-main);font-family:var(--font-body);font-size:0.85rem;cursor:pointer;">
+                            <option value="all" ${swFilterTipo === 'all' ? 'selected' : ''}>Todos los Tipos</option>
+                            ${tipos.map(t => `<option value="${t}" ${swFilterTipo === t ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                        <select onchange="setSwFilter('licencia', this.value)" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-body);color:var(--text-main);font-family:var(--font-body);font-size:0.85rem;cursor:pointer;">
+                            <option value="all" ${swFilterLicencia === 'all' ? 'selected' : ''}>Todas las Licencias</option>
+                            ${licencias.map(l => `<option value="${l}" ${swFilterLicencia === l ? 'selected' : ''}>${l}</option>`).join('')}
+                        </select>
+                        ${(swFilterTipo !== 'all' || swFilterLicencia !== 'all') ? `<button onclick="swFilterTipo='all';swFilterLicencia='all';document.getElementById('content-area').innerHTML=renderSoftware();" style="padding:0.45rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--danger);font-size:0.8rem;cursor:pointer;font-family:var(--font-body);">✕ Limpiar filtros</button>` : ''}
                     </div>
                 </div>
+                <div class="text-sm text-muted" style="margin-bottom: 0.75rem;">${items.length} software(s) encontrado(s)</div>
                 <div class="data-table-container">
                     <table>
                         <thead>
@@ -2248,7 +2411,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${MOCK_DB.software.map(s => `
+                            ${items.length === 0 ? `<tr><td colspan="8" style="text-align:center;padding:2rem;" class="text-muted">No se encontró software con los filtros seleccionados.</td></tr>` : items.map(s => `
                                 <tr style="${s.status === 'Inactivo' ? 'opacity:0.5;' : ''}">
                                     <td class="mono font-bold text-xs">${s.id}</td>
                                     <td class="font-bold">${s.name}</td>
@@ -2274,7 +2437,7 @@
             return `
                 <div class="flex justify-between items-center" style="margin-bottom: 1rem;">
                     <h3 class="font-bold text-lg">Contratos y SLA</h3>
-                    ${currentUser.role === 'ADMIN' ? `<button class="badge badge-neutral" style="padding:0.5rem 1rem;">+ Nuevo Contrato</button>` : ''}
+                    ${currentUser.role === 'ADMIN' ? `<button class="badge" onclick="openFormModal('modal-nuevo-contrato')" style="padding:0.5rem 1rem;color:#fff;background:var(--accent);border:none;cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:0.5rem;"><span class="material-symbols-outlined" style="font-size:1.1rem;">add</span> Nuevo Contrato</button>` : ''}
                 </div>
                 <div class="data-table-container">
                     <table>
@@ -2979,6 +3142,112 @@
         // Init — show login screen on load (sidebar hidden behind overlay)
         renderSidebar();
         logDev('System Initialized. Login screen active.');
+
+        // --- NOTIFICATIONS ---
+        let notificationsRead = false;
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            const isOpen = dropdown.style.display !== 'none';
+            dropdown.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen) {
+                renderNotifications();
+            }
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notif-list');
+            const items = MOCK_DB.auditLog.slice(0, 8);
+            if (items.length === 0) {
+                list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">No hay notificaciones</div>';
+                return;
+            }
+            const iconMap = { 'Caso': 'confirmation_number', 'Activo': 'devices', 'Contrato': 'verified_user', 'Software': 'apps', 'Usuario': 'person' };
+            list.innerHTML = items.map(a => `
+                <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;gap:0.75rem;align-items:flex-start;transition:background 0.15s;cursor:pointer;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='transparent'">
+                    <span class="material-symbols-outlined" style="font-size:1.2rem;color:var(--accent);margin-top:2px;">${iconMap[a.entidad] || 'notifications'}</span>
+                    <div style="flex:1;">
+                        <div style="font-size:0.85rem;font-weight:500;">${a.entidad} <span class="mono text-xs" style="color:var(--text-muted);">${a.entityId}</span></div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);">${a.campo}: <span style="text-decoration:line-through;color:var(--danger);">${a.valorAnterior}</span> → <span style="color:var(--success);">${a.valorNuevo}</span></div>
+                        <div class="mono" style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">${a.fecha} · ${a.autor}</div>
+                    </div>
+                </div>
+            `).join('');
+            // Update badge
+            updateNotifBadge();
+        }
+
+        function updateNotifBadge() {
+            const badge = document.getElementById('notif-badge');
+            const count = notificationsRead ? 0 : Math.min(MOCK_DB.auditLog.length, 8);
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function markAllNotificationsRead() {
+            notificationsRead = true;
+            updateNotifBadge();
+            showToast('Todas las notificaciones marcadas como leídas');
+        }
+
+        // Close notifications dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notif-dropdown');
+            const btn = e.target.closest('[onclick*="toggleNotifications"]');
+            if (!btn && dropdown && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Initialize notification badge
+        updateNotifBadge();
+
+        // --- CREATE CONTRACT ---
+        function crearContrato() {
+            const id = document.getElementById('nc-id').value.trim();
+            const nombre = document.getElementById('nc-nombre').value.trim();
+            const proveedor = document.getElementById('nc-proveedor').value.trim();
+            const servicio = document.getElementById('nc-servicio').value.trim();
+            const cobertura = document.getElementById('nc-cobertura').value;
+            const inicio = document.getElementById('nc-inicio').value;
+            const fin = document.getElementById('nc-fin').value;
+            const alerta = parseInt(document.getElementById('nc-alerta').value) || 30;
+
+            if (!id || !nombre || !proveedor) {
+                showToast('⚠ Complete ID, nombre y proveedor');
+                return;
+            }
+
+            MOCK_DB.contracts.unshift({
+                id, name: nombre, provider: proveedor,
+                service: servicio || 'Sin descripción',
+                coverage: cobertura,
+                start: inicio || new Date().toISOString().split('T')[0],
+                end: fin || '2027-12-31',
+                status: 'Vigente',
+                alertDays: alerta
+            });
+
+            MOCK_DB.auditLog.unshift({
+                id: MOCK_DB.auditLog.length + 1,
+                fecha: new Date().toISOString().replace('T', ' ').split('.')[0],
+                entidad: 'Contrato', entityId: id,
+                campo: 'Creado', valorAnterior: '--',
+                valorNuevo: nombre, autor: currentUser.name
+            });
+
+            closeFormModal('modal-nuevo-contrato');
+            ['nc-id', 'nc-nombre', 'nc-proveedor', 'nc-servicio'].forEach(x => {
+                const el = document.getElementById(x); if (el) el.value = '';
+            });
+            navTo('contracts');
+            showToast(`✔ Contrato ${id} creado exitosamente`);
+            logDev(`AUDIT: Contract ${id} (${nombre}) created`);
+        }
 
     </script>
 </body>
