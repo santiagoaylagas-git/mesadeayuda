@@ -36,6 +36,12 @@ const linking = {
               ServiceRequest: 'catalog/request',
             },
           },
+          InventoryTab: {
+            screens: {
+              AssetList: 'inventory',
+              AssetDetail: 'inventory/:id',
+            },
+          },
           AdminTab: {
             screens: {
               UserManagement: 'admin/users',

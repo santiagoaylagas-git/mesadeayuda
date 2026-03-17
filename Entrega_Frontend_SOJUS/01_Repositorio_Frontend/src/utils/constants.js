@@ -52,7 +52,7 @@ export const PERMISSIONS = {
   ],
   OPERADOR: [
     'tickets.create', 'tickets.read', 'tickets.update',
-    'catalog.read', 'inventory.read',
+    'catalog.read',
   ],
   TECNICO: [
     'tickets.read', 'tickets.update.assigned', 'tickets.resolve',
